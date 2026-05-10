@@ -1,10 +1,12 @@
 import AppRoutes from "./routes/AppRoutes";
 import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BrowserRouter } from "react-router-dom";
 
 function App() {
   return (
     <>
+     <BrowserRouter>
       <ToastContainer
         position="top-right"
         autoClose={2500}
@@ -21,6 +23,7 @@ function App() {
         progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
       />
       <AppRoutes />
+      </BrowserRouter>
     </>
   );
 }

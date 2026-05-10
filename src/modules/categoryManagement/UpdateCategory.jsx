@@ -1,116 +1,94 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Upload, X, Save, ArrowLeft } from "lucide-react";
-import { categoryStore } from "../../modules/categoryManagement/categoryStore";
+import { useDispatch, useSelector } from "react-redux";
+import { Upload, X, Save } from "lucide-react";
+import {
+  fetchCategoryById,
+  updateCategory,
+  clearSelectedCategory,
+} from "../../redux/slices/category/viewCategorySlice";
+import Loader from "../../components/common/Loader";
 
 export default function UpdateCategory() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { id } = useParams();
 
-  const [form, setForm] = useState({
-    name: "",
-    image: "",
-    status: "active",
-  });
+  const { selectedCategory, detailLoading, detailError, actionLoading } =
+    useSelector((state) => state.viewcategory);
 
+  const [form, setForm] = useState({ name: "", isActive: true });
+  const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [errors, setErrors] = useState({});
-  const [notFound, setNotFound] = useState(false);
 
-  /* Autofill on mount */
   useEffect(() => {
-    const cat = categoryStore.getById(id);
+    dispatch(fetchCategoryById(id));
+    return () => dispatch(clearSelectedCategory());
+  }, [id, dispatch]);
 
-    if (!cat) {
-      setNotFound(true);
-      return;
+  useEffect(() => {
+    if (selectedCategory) {
+      setForm({
+        name: selectedCategory.name || "",
+        isActive: selectedCategory.isActive ?? true,
+      });
+      setPreview(selectedCategory.image || null);
+      setImageFile(null);
     }
+  }, [selectedCategory]);
 
-    setForm({
-      name: cat.name,
-      image: cat.image,
-      status: cat.status || "active",
-    });
-
-    setPreview(cat.image);
-  }, [id]);
-
-  /* Handle Input Change */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
-    if (errors[name]) {
-      setErrors((e) => ({ ...e, [name]: "" }));
-    }
+    if (errors[name]) setErrors((e) => ({ ...e, [name]: "" }));
   };
 
-  /* Handle Image Upload */
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    setImageFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-      setForm((f) => ({ ...f, image: reader.result }));
-    };
+    reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(file);
-
-    if (errors.image) {
-      setErrors((e) => ({ ...e, image: "" }));
-    }
+    if (errors.image) setErrors((e) => ({ ...e, image: "" }));
   };
 
   const removeImage = () => {
     setPreview(null);
-    setForm((f) => ({ ...f, image: "" }));
+    setImageFile(null);
   };
 
   const validate = () => {
     const errs = {};
     if (!form.name.trim()) errs.name = "Category name required hai";
-    if (!form.image) errs.image = "Image required hai";
+    if (!preview) errs.image = "Image required hai";
     return errs;
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const errs = validate();
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
     }
-    categoryStore.update(id, form);
-    navigate("/categories");
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("isActive", form.isActive);
+    if (imageFile) formData.append("image", imageFile);
+    const result = await dispatch(updateCategory({ id, formData }));
+    if (updateCategory.fulfilled.match(result)) navigate(-1);
   };
 
-  if (notFound) {
+  // ── Page load hote waqt loader (data fetch) ──
+  if (detailLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="bg-red-50 p-6 rounded-2xl">
-          <p className="text-gray-600 font-medium">
-            Category nahi mili. ID: {id}
-          </p>
-          <button
-            onClick={() => navigate("/categories")}
-            className="mt-4 flex items-center gap-2 text-[#E23E08] font-bold mx-auto hover:underline"
-          >
-            <ArrowLeft size={18} /> Wapas jao
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full h-full">
-      <div className="bg-white min-h-[80vh] rounded-xl border border-gray-200 p-7 shadow-sm flex flex-col">
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50">
-          <div className="flex items-center gap-4">
+      <div className="w-full h-full">
+        <div className="bg-white h-full rounded-xl border border-gray-200 p-7 shadow-sm flex flex-col">
+          <div className="flex items-center gap-3 mb-8">
             <button
               onClick={() => navigate(-1)}
               className="p-2 rounded-xl cursor-pointer text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all"
-              aria-label="Go back"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -127,22 +105,80 @@ export default function UpdateCategory() {
                 />
               </svg>
             </button>
-
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              <h1 className="text-2xl font-bold text-gray-800">
                 Update Category
               </h1>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-sm text-gray-500 mt-1">
                 Yahan se category ki details modify karein
               </p>
             </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center py-20">
+            <Loader />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Not found ──
+  if (detailError || (!detailLoading && !selectedCategory)) {
+    return (
+      <div className="w-full h-full">
+        <div className="bg-white min-h-[80vh] rounded-xl border border-gray-200 p-7 shadow-sm flex flex-col items-center justify-center">
+          <p className="text-gray-600 font-medium">
+            Category nahi mili. ID: {id}
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 text-[#E23E08] font-bold hover:underline"
+          >
+            ← Wapas jao
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full">
+      <div className="bg-white min-h-[80vh] rounded-xl border border-gray-200 p-7 shadow-sm flex flex-col">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8 pb-4 border-b border-gray-50">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-xl cursor-pointer text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              Update Category
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Yahan se category ki details modify karein
+            </p>
           </div>
         </div>
 
         {/* Form Body */}
         <div className="flex-1 max-w-3xl">
           <div className="grid grid-cols-1 gap-8">
-            {/* Name Input */}
+            {/* Name */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                 Category Name <span className="text-red-500">*</span>
@@ -154,11 +190,7 @@ export default function UpdateCategory() {
                 onChange={handleChange}
                 placeholder="e.g. Italian Cuisine"
                 className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all
-                  ${
-                    errors.name
-                      ? "border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100"
-                      : "border-gray-200 bg-[#F7F8F9] focus:border-[#E23E08] focus:bg-white focus:ring-2 focus:ring-orange-50"
-                  }`}
+                  ${errors.name ? "border-red-400 bg-red-50" : "border-gray-200 bg-[#F7F8F9] focus:border-[#E23E08]"}`}
               />
               {errors.name && (
                 <p className="text-xs text-red-500 font-medium ml-1">
@@ -167,12 +199,11 @@ export default function UpdateCategory() {
               )}
             </div>
 
-            {/* Image Upload Section */}
+            {/* Image */}
             <div className="space-y-3">
               <label className="text-sm font-semibold text-gray-700">
                 Category Image <span className="text-red-500">*</span>
               </label>
-
               {preview ? (
                 <div className="flex items-start gap-6 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
                   <div className="relative group">
@@ -208,10 +239,10 @@ export default function UpdateCategory() {
                   className={`flex flex-col items-center justify-center w-full h-44 border-2 border-dashed rounded-2xl cursor-pointer transition-all
                   ${errors.image ? "border-red-400 bg-red-50" : "border-gray-200 bg-[#F7F8F9] hover:border-[#E23E08] hover:bg-orange-50/50"}`}
                 >
-                  <div className="bg-white p-3 rounded-full shadow-sm mb-3 text-gray-400 group-hover:text-[#E23E08]">
+                  <div className="bg-white p-3 rounded-full shadow-sm mb-3 text-gray-400">
                     <Upload size={28} />
                   </div>
-                  <p className="text-sm font-semibold text-gray-700 tracking-tight">
+                  <p className="text-sm font-semibold text-gray-700">
                     Click karke image upload karo
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
@@ -234,18 +265,28 @@ export default function UpdateCategory() {
           </div>
         </div>
 
-        {/* Action Buttons - Centered at Bottom */}
+        {/* Buttons */}
         <div className="flex items-center justify-center gap-4 pt-10 border-t border-gray-50 mt-10">
           <button
             onClick={handleUpdate}
-            className="flex items-center gap-2 px-10 py-3 bg-[#E23E08] text-white text-sm font-bold rounded-xl hover:bg-[#c73507] hover:shadow-lg hover:shadow-orange-200 transition-all active:scale-95 cursor-pointer"
+            disabled={actionLoading}
+            className="flex items-center gap-2 px-10 py-3 bg-[#E23E08] text-white text-sm font-bold rounded-xl hover:bg-[#c73507] transition-all active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <Save size={18} /> Update Category
+            {actionLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <Save size={18} /> Update Category
+              </>
+            )}
           </button>
-
           <button
-            onClick={() => navigate("/categories")}
-            className="px-10 py-3 border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-95 cursor-pointer"
+            onClick={() => navigate(-1)}
+            disabled={actionLoading}
+            className="px-10 py-3 border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all cursor-pointer disabled:opacity-60"
           >
             Cancel
           </button>

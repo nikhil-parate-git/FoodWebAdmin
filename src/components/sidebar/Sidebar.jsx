@@ -1,24 +1,19 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import {
   LayoutDashboard,
   ClipboardList,
-  Users,
-  Briefcase,
   List,
   Tag,
   Layers,
-  DollarSign,
-  Key,
-  MapPin,
   Image,
-  CreditCard,
-  Settings,
   LogOut,
 } from "lucide-react";
 import logo from "../../assets/logo.png";
 import ConfirmModal from "../common/ConfirmModal";
-import { useNavigate } from "react-router-dom";
+import { logout } from "../../redux/slices/auth/loginSlice";
+import { clearProfile } from "../../redux/slices/profile/profileSlice";
 
 // ─── Sidebar Nav Config ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -36,7 +31,6 @@ const NAV_ITEMS = [
     icon: Tag,
     path: "/category",
   },
-
   {
     id: "sub-category",
     label: "Dishes Management",
@@ -44,19 +38,9 @@ const NAV_ITEMS = [
     path: "/dishes",
   },
   { id: "banner", label: "Banner Management", icon: Image, path: "/banner" },
-
-  // { id: 'customer',      label: 'Customer Management',      icon: Users,           path: '/customer' },
-  // { id: 'business-user', label: 'Business User Management', icon: Briefcase,       path: '/business-user' },
-
-  // { id: 'revenue',       label: 'Revenue Management',       icon: DollarSign,      path: '/revenue' },
-  // { id: 'keyword',       label: 'Keyword Management',       icon: Key,             path: '/keyword' },
-  // { id: 'location',      label: 'Location Management',      icon: MapPin,          path: '/location' },
-
-  // { id: 'subscription',  label: 'Subscription Management',  icon: CreditCard,      path: '/subscription' },
 ];
 
 const BOTTOM_ITEMS = [
-  // { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   {
     id: "logout",
     label: "Logout",
@@ -76,9 +60,15 @@ const SidebarLogo = () => (
 // ─── Nav Item ──────────────────────────────────────────────────────────────────
 const NavItem = ({ item }) => {
   const Icon = item.icon;
+  const { pathname } = useLocation();
+
+  const isActive =
+    item.path === "/"
+      ? pathname === "/"
+      : pathname === item.path || pathname.startsWith(item.path + "/");
 
   const baseClass =
-    "w-full flex items-center gap-3 px-3 py-2.5   text-left text-md transition-colors duration-150 group";
+    "w-full flex items-center gap-3 px-3 py-2.5 text-left text-md transition-colors duration-150 group";
 
   const activeClass =
     "bg-[#E23E08] text-white font-semibold border-l-5 border-orange-900";
@@ -90,23 +80,16 @@ const NavItem = ({ item }) => {
     <li>
       <NavLink
         to={item.path}
-        className={({ isActive }) =>
-          `${baseClass} ${isActive ? activeClass : inactiveClass}`
-        }
+        end={false}
+        className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
       >
-        {({ isActive }) => (
-          <>
-            <Icon
-              className={`w-4 h-4 flex-shrink-0 transition-colors duration-150 ${
-                isActive
-                  ? "text-white"
-                  : "text-gray-800 group-hover:text-[#E8431A]"
-              }`}
-              strokeWidth={1.8}
-            />
-            <span className="truncate">{item.label}</span>
-          </>
-        )}
+        <Icon
+          className={`w-4 h-4 flex-shrink-0 transition-colors duration-150 ${
+            isActive ? "text-white" : "text-gray-800 group-hover:text-[#E8431A]"
+          }`}
+          strokeWidth={1.8}
+        />
+        <span className="truncate">{item.label}</span>
       </NavLink>
     </li>
   );
@@ -116,10 +99,13 @@ const NavItem = ({ item }) => {
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
+    dispatch(clearProfile());
+    dispatch(logout());
     setShowLogoutModal(false);
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -162,7 +148,6 @@ const Sidebar = () => {
         </div>
       </aside>
 
-      {/* ✅ Confirm Modal */}
       <ConfirmModal
         isOpen={showLogoutModal}
         title="Yes, Logout"

@@ -1,93 +1,39 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllUsers } from "../../redux/slices/customer/customerSlice"; 
 
-const INITIAL_DATA = [
-  {
-    id: 1,
-    name: "Ronald Richards",
-    email: "ronald@example.com",
-    phone: "9872356232",
-    gender: "Male",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Marvin McKinney",
-    email: "marvin@example.com",
-    phone: "9876543210",
-    gender: "Male",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Ralph Edwards",
-    email: "ralph@example.com",
-    phone: "9123456780",
-    gender: "Male",
-    status: "inactive",
-  },
-  {
-    id: 4,
-    name: "Jacob Jones",
-    email: "jacob@example.com",
-    phone: "8800112233",
-    gender: "Male",
-    status: "active",
-  },
-  {
-    id: 5,
-    name: "Jane Cooper",
-    email: "jane@example.com",
-    phone: "7700998877",
-    gender: "Female",
-    status: "pending",
-  },
-  // Testing pagination logic...
-  {
-    id: 6,
-    name: "Arlene McCoy",
-    email: "arlene@example.com",
-    phone: "8521479630",
-    gender: "Female",
-    status: "active",
-  },
-  {
-    id: 7,
-    name: "Theresa Webb",
-    email: "theresa@example.com",
-    phone: "7412589630",
-    gender: "Female",
-    status: "inactive",
-  },
-];
+// Loader Component (inline or import from your file)
+const Loader = () => (
+  <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-orange-600"></div>
+);
 
-const Customers = () => {
+const Customer = () => {
   const navigate = useNavigate();
-  const [data] = useState(INITIAL_DATA);
+  const dispatch = useDispatch();
+
+  const { users, pagination, loading } = useSelector((state) => state.users);
+
   const [search, setSearch] = useState("");
-
-  /* Pagination State */
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
 
-  /* Filter Logic */
+  // Fetch users on page change
+  useEffect(() => {
+    dispatch(getAllUsers(currentPage));
+  }, [dispatch, currentPage]);
+
+  // Client-side search filter (on current page data)
   const filteredData = useMemo(() => {
-    return data.filter(
+    return users.filter(
       (item) =>
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.email.toLowerCase().includes(search.toLowerCase()),
+        item.name?.toLowerCase().includes(search.toLowerCase()) ||
+        item.email?.toLowerCase().includes(search.toLowerCase())
     );
-  }, [data, search]);
-
-  /* Pagination Calculation */
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const indexOfLastRow = currentPage * rowsPerPage;
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
+  }, [users, search]);
 
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= pagination.totalPages) {
       setCurrentPage(page);
     }
   };
@@ -106,7 +52,7 @@ const Customers = () => {
 
       <hr className="border-gray-100 mb-6" />
 
-      {/* Toolbar */}
+      {/* Toolbar — always visible */}
       <div className="flex items-center justify-between mb-6 gap-4">
         <div className="flex items-center border border-gray-200 rounded-xl px-4 bg-[#F7F8F9] w-80 h-12 focus-within:border-[#E23E08] transition-all">
           <Search size={18} className="text-[#E23E08] mr-2 flex-shrink-0" />
@@ -116,14 +62,13 @@ const Customers = () => {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setCurrentPage(1);
             }}
             className="bg-transparent outline-none text-sm w-full font-medium text-gray-700"
           />
         </div>
       </div>
 
-      {/* Table Container with Hidden Scrollbar */}
+      {/* Table Container */}
       <div className="w-full border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-[#FCFDFD]">
         <div
           className="overflow-x-auto scrollbar-hide"
@@ -133,39 +78,49 @@ const Customers = () => {
             .scrollbar-hide::-webkit-scrollbar { display: none; }
           `}</style>
 
-          <table className="w-full min-w-[900px] border-collapse">
+          <table className="w-full text-center min-w-[900px] border-collapse">
+            {/* Header — always fixed/visible */}
             <thead className="bg-[#E8D5C4]/40">
               <tr>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700  w-[80px]">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Sr.No.
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 ">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Customer Name
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 ">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Email Address
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 ">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Phone Number
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 ">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Gender
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700  w-[100px]">
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-[50px]">
                   Action
                 </th>
               </tr>
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-50">
-              {currentRows.length > 0 ? (
-                currentRows.map((customer, index) => (
+              {loading ? (
+                // Loader centered inside table body
+                <tr>
+                  <td colSpan="6" className="px-6 py-20 text-center">
+                    <div className="flex items-center justify-center">
+                      <Loader />
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredData.length > 0 ? (
+                filteredData.map((customer, index) => (
                   <tr
-                    key={customer.id}
+                    key={customer._id || customer.id}
                     className="hover:bg-orange-50/30 transition-colors group"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-gray-400">
-                      {indexOfFirstRow + index + 1}
+                      {(currentPage - 1) * 10 + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-600">
@@ -178,7 +133,7 @@ const Customers = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-medium text-gray-700  ">
+                      <span className="text-sm font-medium text-gray-700">
                         {customer.phone}
                       </span>
                     </td>
@@ -190,7 +145,7 @@ const Customers = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
                         onClick={() =>
-                          navigate(`/customer/${customer.id}`, {
+                          navigate(`/customer/${customer._id || customer.id}`, {
                             state: customer,
                           })
                         }
@@ -216,27 +171,29 @@ const Customers = () => {
         </div>
       </div>
 
-      {/* Custom Pagination Footer */}
+      {/* Pagination Footer */}
       <div className="flex items-center justify-between mt-8">
         <div className="text-sm font-medium text-gray-500">
-          Showing <span className="text-gray-800">{currentRows.length}</span> of{" "}
-          <span className="text-gray-800">{filteredData.length}</span> customers
+          Showing{" "}
+          <span className="text-gray-800">{filteredData.length}</span> of{" "}
+          <span className="text-gray-800">{pagination.totalUsers}</span> customers
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
+            disabled={!pagination.hasPrevPage || loading}
             className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:bg-white hover:text-[#E23E08] hover:border-[#E23E08] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
           >
             <ChevronLeft size={20} />
           </button>
 
           <div className="flex items-center gap-1">
-            {[...Array(totalPages)].map((_, i) => (
+            {[...Array(pagination.totalPages)].map((_, i) => (
               <button
                 key={i}
                 onClick={() => handlePageChange(i + 1)}
+                disabled={loading}
                 className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all shadow-sm ${
                   currentPage === i + 1
                     ? "bg-[#E23E08] text-white"
@@ -250,7 +207,7 @@ const Customers = () => {
 
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            disabled={!pagination.hasNextPage || loading}
             className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:bg-white hover:text-[#E23E08] hover:border-[#E23E08] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
           >
             <ChevronRight size={20} />
@@ -261,4 +218,4 @@ const Customers = () => {
   );
 };
 
-export default Customers;
+export default Customer;

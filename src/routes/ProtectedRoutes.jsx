@@ -1,4 +1,5 @@
 import { Route } from "react-router-dom";
+import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../components/layout/MainLayout";
 import Dashboard from "../modules/dashboard/Dashboard";
 import Customer from "../modules/customerManagement/Customer";
@@ -18,28 +19,32 @@ import UpdateDishes from "../modules/dishesManagement/UpdateDishes";
 import AddBanner from "../modules/bannerManagement/AddBanner";
 import UpdateBanner from "../modules/bannerManagement/UpdateBanner";
 import ViewBanner from "../modules/bannerManagement/ViewBanner";
+import Profile from "../components/profile/Profile";
+
 const ProtectedRoutes = () => {
   return [
-    <Route key="main" path="/" element={<MainLayout />}>
-      <Route index element={<Dashboard />} />
-      <Route path="/customer" element={<Customer />} />
-      <Route path="/customer/:id" element={<CustomerView />} />
-      <Route path="/orders" element={<Orders />} />
-      <Route path="/orders/:id" element={<OrderView />} />
-      <Route path="/category" element={<CategoryList />} />
-      <Route path="/categories/add" element={<AddCategory />} />
-      <Route path="/categories/update/:id" element={<UpdateCategory />} />
-      <Route path="/categories/view/:id" element={<ViewCategory />} />
-      <Route path="/dishes" element={<Dishes />} />
-      <Route path="/dishes/add" element={<AddDishes />} />
-      <Route path="/dishes/view/:id" element={<ViewDishes />} />
-      <Route path="/dishes/update/:id" element={<UpdateDishes />} />
-      <Route path="/revenue" element={<RevenueManagement />} />
-      <Route path="/banner" element={<BannerManagement />} />
-      <Route path="/banner/add" element={<AddBanner />} />
-      <Route path="/banner/update/:id" element={<UpdateBanner />} />
-
-      <Route path="/banner/view/:id" element={<ViewBanner />} />
+    <Route key="protected-guard" element={<ProtectedRoute />}>
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/customer" element={<Customer />} />
+        <Route path="/customer/:id" element={<CustomerView />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:id" element={<OrderView />} />
+        <Route path="/category" element={<CategoryList />} />
+        <Route path="/category/add" element={<AddCategory />} />
+        <Route path="/category/update/:id" element={<UpdateCategory />} />
+        <Route path="/category/view/:id" element={<ViewCategory />} />
+        <Route path="/dishes" element={<Dishes />} />
+        <Route path="/dishes/add" element={<AddDishes />} />
+        <Route path="/dishes/view/:id" element={<ViewDishes />} />
+        <Route path="/dishes/update/:id" element={<UpdateDishes />} />
+        <Route path="/revenue" element={<RevenueManagement />} />
+        <Route path="/banner" element={<BannerManagement />} />
+        <Route path="/banner/add" element={<AddBanner />} />
+        <Route path="/banner/update/:id" element={<UpdateBanner />} />
+        <Route path="/banner/view/:id" element={<ViewBanner />} />
+      </Route>
     </Route>,
   ];
 };
