@@ -2,13 +2,17 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_URL = "https://foodwebbe.onrender.com/api/admin/auth/login";
+// Base URL ko environment variable se fetch kiya gaya hai
+const BASE_URL = import.meta.env.VITE_API_URL;
+const LOGIN_ENDPOINT = `${BASE_URL}/admin/auth/login`;
 
 export const loginAdmin = createAsyncThunk(
   "auth/loginAdmin",
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axios.post(API_URL, credentials);
+      // API_URL ki jagah LOGIN_ENDPOINT use kiya
+      const response = await axios.post(LOGIN_ENDPOINT, credentials);
+      
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("admin", JSON.stringify(response.data.admin));

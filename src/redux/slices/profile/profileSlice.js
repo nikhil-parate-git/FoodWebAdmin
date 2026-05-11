@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { logout } from "../auth/loginSlice"; // ← import logout
+import { logout } from "../auth/loginSlice"; 
 
-const API_URL = "https://foodwebbe.onrender.com/api/admin/auth/profile";
+// Environment variable ka use karke base path set kiya
+const API_URL = `${import.meta.env.VITE_API_URL}/admin/auth/profile`;
 
 export const fetchProfile = createAsyncThunk(
   "profile/fetchProfile",
@@ -22,7 +23,7 @@ export const fetchProfile = createAsyncThunk(
     } catch (error) {
       // 401 → token invalid/expired → force logout
       if (error.response?.status === 401) {
-        dispatch(logout())
+        dispatch(logout());
       }
 
       const message = error.response?.data?.message || "Failed to fetch profile";

@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const BASE_URL = "https://foodwebbe.onrender.com/api/admin/banners";
+// Environment variable ka upyog karke BASE_URL set kiya
+const BASE_URL = `${import.meta.env.VITE_API_URL}/admin/banners`;
 
 const getToken = () => localStorage.getItem("token");
 const authHeaders = () => ({
@@ -108,7 +109,7 @@ const bannerSlice = createSlice({
   name: "banner",
   initialState: {
     banners: [],
-    pagination: null,       // ← NEW
+    pagination: null,
     selectedBanner: null,
     loading: false,
     actionLoading: false,
@@ -129,7 +130,7 @@ const bannerSlice = createSlice({
       .addCase(fetchAllBanners.fulfilled, (state, action) => {
         state.loading = false;
         state.banners = action.payload.banners;
-        state.pagination = action.payload.pagination; // ← NEW
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchAllBanners.rejected, (state, action) => {
         state.loading = false;

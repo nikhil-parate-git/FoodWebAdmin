@@ -2,6 +2,9 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+// Environment variable ka upyog karke base path set kiya
+const BASE_URL = `${import.meta.env.VITE_API_URL}/admin/users`;
+
 // Async Thunk for fetching users
 export const getAllUsers = createAsyncThunk(
   "users/getAllUsers",
@@ -9,7 +12,7 @@ export const getAllUsers = createAsyncThunk(
     try {
       const token = localStorage.getItem("token"); // Token from localstorage
       const response = await axios.get(
-        `https://foodwebbe.onrender.com/api/admin/users/all?page=${page}`,
+        `${BASE_URL}/all?page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

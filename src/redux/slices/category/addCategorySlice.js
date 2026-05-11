@@ -2,8 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_URL =
-  "https://foodwebbe.onrender.com/api/admin/categories/createcatgory";
+// Environment variable ka upyog karke path set kiya
+const API_URL = `${import.meta.env.VITE_API_URL}/admin/categories/createcatgory`;
 
 // Async Thunk for creating category
 export const createCategory = createAsyncThunk(

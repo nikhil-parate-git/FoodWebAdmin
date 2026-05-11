@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const BASE = "https://foodwebbe.onrender.com/api/admin/auth";
+// Environment variable ka use karke base path set kiya
+const BASE = `${import.meta.env.VITE_API_URL}/admin/auth`;
 
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
