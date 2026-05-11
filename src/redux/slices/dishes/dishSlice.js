@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-// Environment variable ka upyog karke base path set kiya
 const BASE_URL = `${import.meta.env.VITE_API_URL}/admin`;
 
 const getToken = () => localStorage.getItem("token");
@@ -30,6 +29,7 @@ export const createDish = createAsyncThunk(
 );
 
 // ─── THUNK: Fetch All Dishes ─────────────────────────────────────────────────
+// ✅ FIX: limit=1000 query param bhejo taaki saari dishes aayein
 export const fetchDishes = createAsyncThunk(
   "dishes/fetchDishes",
   async (_, { rejectWithValue }) => {
@@ -37,6 +37,7 @@ export const fetchDishes = createAsyncThunk(
       const token = getToken();
       const response = await axios.get(`${BASE_URL}/dishes/getall`, {
         headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 1000, page: 1 }, // ✅ saari dishes fetch karo
       });
       return response.data.dishes;
     } catch (error) {
@@ -121,7 +122,6 @@ export const fetchCategoriesDropdown = createAsyncThunk(
 
       const data = response.data;
 
-      // ── Extract raw array from any API response shape ──
       let raw = [];
       if (Array.isArray(data)) {
         raw = data;
@@ -133,7 +133,6 @@ export const fetchCategoriesDropdown = createAsyncThunk(
         raw = Object.values(data).find((v) => Array.isArray(v)) || [];
       }
 
-      // ── Normalize: API sends { value, label } — map to { _id, name } ──
       return raw.map((cat) => ({
         _id: cat._id || cat.value,
         name: cat.name || cat.label,
